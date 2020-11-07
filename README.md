@@ -3,8 +3,8 @@ A real-time chat application using ASP.NET SignalR and KnockoutJS. Available for
 
 Find mobile version here: [Chat.Mobile](https://github.com/AKouki/SignalR-Chat.Mobile)
 
-![](https://raw.githubusercontent.com/AKouki/SignalR-Chat/master/Chat.Web/Content/screenshots/mockup1.png)
-![](https://raw.githubusercontent.com/AKouki/SignalR-Chat/master/Chat.Web/Content/screenshots/mockup2.png)
+![](https://raw.githubusercontent.com/AKouki/SignalR-Chat/netframework/Chat.Web/Content/screenshots/mockup1.png)
+![](https://raw.githubusercontent.com/AKouki/SignalR-Chat/netframework/Chat.Web/Content/screenshots/mockup2.png)
 
 ## Features
 * Group chat
