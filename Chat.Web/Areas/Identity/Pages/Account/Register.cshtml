@@ -9,6 +9,10 @@
         <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
             <h4>Create a new account.</h4>
             <hr />
+            <div class="alert alert-warning" role="alert">
+                <p class="mb-2">New registrations are disabled for security reasons.</p>
+                <p class="mb-0">You can use demo accounts in Sign in page.</p>
+            </div>
             <div asp-validation-summary="All" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Input.UserName"></label>
@@ -54,12 +58,12 @@
                     <img class="avatar-icon" src="~/images/icons/avatar4.png" alts="" />
                 </label>
             </div>
-            <button type="submit" class="btn btn-sign-up">Register</button>
+            <button type="button" class="btn btn-sign-up disabled">Register (Disabled)</button>
             <a class="btn btn-link px-0" asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Already have an account?</a>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<partial name="_ValidationScriptsPartial" />
 }

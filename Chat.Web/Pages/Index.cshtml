@@ -28,6 +28,8 @@
         <ul class="rooms list-unstyled" id="room-list" data-bind="foreach: chatRooms">
             <li><a href="#" data-bind="text: $data.name, attr: { 'data-roomId': $data.id }, click: $parent.joinRoom.bind($data), css: { active: $root.joinedRoom() == $data.name()}"></a></li>
         </ul>
+        <a class="btn-reset" asp-action="Index" asp-controller="Reset">Reset Data</a>
+
         <div class="profile">
             <div>
                 <img src="/images/icons/avatar1.png" class="user-avatar" data-bind="attr: { src: '/images/icons/' + myAvatar() }" />

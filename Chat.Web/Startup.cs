@@ -30,8 +30,7 @@ namespace Chat.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseInMemoryDatabase("SIGNALRCHATDB"));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -40,11 +39,15 @@ namespace Chat.Web
                 options.SignIn.RequireConfirmedAccount = false;
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
                 options.User.RequireUniqueEmail = true;
+                options.Password.RequireDigit = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 5;
             }).AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddAutoMapper(typeof(Startup));
             services.AddRazorPages();
-            services.AddControllers();
+            services.AddControllers().AddRazorRuntimeCompilation();
             services.AddSignalR();
         }
 

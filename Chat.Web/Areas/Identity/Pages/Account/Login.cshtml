@@ -9,15 +9,19 @@
     <div class="login-container">
         <img class="profile-avatar" src="//ssl.gstatic.com/accounts/ui/avatar_2x.png" />
         <form id="account" method="post">
+            <div class="alert alert-success" role="alert">
+                <p class="mb-0">Username: admin (or admin2)</p>
+                <p class="mb-0">Password: admin</p>
+            </div>
             <div asp-validation-summary="All" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Input.UserName"></label>
-                <input asp-for="Input.UserName" class="form-control" />
+                <input asp-for="Input.UserName" class="form-control" value="admin" />
                 <span asp-validation-for="Input.UserName" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Input.Password"></label>
-                <input asp-for="Input.Password" class="form-control" />
+                <input asp-for="Input.Password" class="form-control" value="admin"/>
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
             <div class="form-check">
@@ -36,5 +40,5 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<partial name="_ValidationScriptsPartial" />
 }

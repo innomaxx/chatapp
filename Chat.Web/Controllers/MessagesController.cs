@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.SignalR;
 using Chat.Web.Hubs;
 using Chat.Web.ViewModels;
 using System.Text.RegularExpressions;
+using Chat.Web.Data.DataSeeding;
+using Microsoft.AspNetCore.Identity;
 
 namespace Chat.Web.Controllers
 {
@@ -24,14 +26,17 @@ namespace Chat.Web.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IHubContext<ChatHub> _hubContext;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public MessagesController(ApplicationDbContext context,
             IMapper mapper,
-            IHubContext<ChatHub> hubContext)
+            IHubContext<ChatHub> hubContext, 
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _mapper = mapper;
             _hubContext = hubContext;
+            _userManager = userManager;
         }
 
         [HttpGet("{id}")]
@@ -67,29 +72,37 @@ namespace Chat.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Message>> Create(MessageViewModel messageViewModel)
+        public async Task<IActionResult> Create(MessageViewModel messageViewModel)
         {
-            var user = _context.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
-            var room = _context.Rooms.FirstOrDefault(r => r.Name == messageViewModel.Room);
-            if (room == null)
-                return BadRequest();
-
-            var msg = new Message()
+            if (ShouldReset())
             {
-                Content = Regex.Replace(messageViewModel.Content, @"<.*?>", string.Empty),
-                FromUser = user,
-                ToRoom = room,
-                Timestamp = DateTime.Now
-            };
+                await DbInitializer.Initialize(_context, _userManager);
+                return Redirect("/");
+            }
+            else
+            {
+                var user = _context.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
+                var room = _context.Rooms.FirstOrDefault(r => r.Name == messageViewModel.Room);
+                if (room == null)
+                    return BadRequest();
 
-            _context.Messages.Add(msg);
-            await _context.SaveChangesAsync();
+                var msg = new Message()
+                {
+                    Content = Regex.Replace(messageViewModel.Content, @"<.*?>", string.Empty),
+                    FromUser = user,
+                    ToRoom = room,
+                    Timestamp = DateTime.Now
+                };
 
-            // Broadcast the message
-            var createdMessage = _mapper.Map<Message, MessageViewModel>(msg);
-            await _hubContext.Clients.Group(room.Name).SendAsync("newMessage", createdMessage);
+                _context.Messages.Add(msg);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(Get), new { id = msg.Id }, createdMessage);
+                // Broadcast the message
+                var createdMessage = _mapper.Map<Message, MessageViewModel>(msg);
+                await _hubContext.Clients.Group(room.Name).SendAsync("newMessage", createdMessage);
+
+                return CreatedAtAction(nameof(Get), new { id = msg.Id }, createdMessage);
+            }
         }
 
         [HttpDelete("{id}")]
@@ -107,6 +120,18 @@ namespace Chat.Web.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        private bool ShouldReset()
+        {
+            var rooms = _context.Rooms.Count();
+            var messages = _context.Messages.Count();
+
+            if ((rooms + messages) > 500)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
