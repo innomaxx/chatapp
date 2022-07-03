@@ -1,20 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+
 using AutoMapper;
-using Chat.Web.Data;
-using Chat.Web.Hubs;
-using Chat.Web.Models;
-using Chat.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
+
+using Chat.Web.Data;
+using Chat.Web.Hubs;
+using Chat.Web.Models;
+using Chat.Web.ViewModels;
 
 namespace Chat.Web.Controllers
 {
@@ -23,8 +25,8 @@ namespace Chat.Web.Controllers
     [ApiController]
     public class UploadController : ControllerBase
     {
-        private readonly int FileSizeLimit;
-        private readonly string[] AllowedExtensions;
+        private readonly int _fileSizeLimit;
+        private readonly string[] _allowedExtensions;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _environment;
@@ -34,15 +36,20 @@ namespace Chat.Web.Controllers
             IMapper mapper,
             IWebHostEnvironment environment,
             IHubContext<ChatHub> hubContext,
-            IConfiguration configruation)
+            IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
             _environment = environment;
             _hubContext = hubContext;
 
-            FileSizeLimit = configruation.GetSection("FileUpload").GetValue<int>("FileSizeLimit");
-            AllowedExtensions = configruation.GetSection("FileUpload").GetValue<string>("AllowedExtensions").Split(",");
+            _fileSizeLimit = configuration
+                .GetSection("FileUpload")
+                .GetValue<int>("FileSizeLimit");
+            
+            _allowedExtensions = configuration
+                .GetSection("FileUpload")
+                .GetValue<string>("AllowedExtensions").Split(",");
         }
 
         [HttpPost]
@@ -56,28 +63,27 @@ namespace Chat.Web.Controllers
                     return BadRequest("Validation failed!");
                 }
 
-                var fileName = DateTime.Now.ToString("yyyymmddMMss") + "_" + Path.GetFileName(uploadViewModel.File.FileName);
-                var folderPath = Path.Combine(_environment.WebRootPath, "uploads");
-                var filePath = Path.Combine(folderPath, fileName);
+                string fileName = DateTime.Now.ToString("yyyymmddMMss") + "_" + Path.GetFileName(uploadViewModel.File.FileName);
+                string folderPath = Path.Combine(_environment.WebRootPath, "uploads");
+                string filePath = Path.Combine(folderPath, fileName);
                 if (!Directory.Exists(folderPath))
                     Directory.CreateDirectory(folderPath);
 
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                await using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await uploadViewModel.File.CopyToAsync(fileStream);
                 }
 
-                var user = _context.Users.Where(u => u.UserName == User.Identity.Name).FirstOrDefault();
-                var room = _context.Rooms.Where(r => r.Id == uploadViewModel.RoomId).FirstOrDefault();
-                if (user == null || room == null)
-                    return NotFound();
+                ApplicationUser user = _context.Users.FirstOrDefault(user => user.UserName == User.Identity.Name);
+                Room room = _context.Rooms.FirstOrDefault(room => room.Id == uploadViewModel.RoomId);
+                if (user == null || room == null) return NotFound();
 
                 string htmlImage = string.Format(
                     "<a href=\"/uploads/{0}\" target=\"_blank\">" +
                     "<img src=\"/uploads/{0}\" class=\"post-image\">" +
                     "</a>", fileName);
 
-                var message = new Message()
+                var message = new Message
                 {
                     Content = Regex.Replace(htmlImage, @"(?i)<(?!img|a|/a|/img).*?>", string.Empty),
                     Timestamp = DateTime.Now,
@@ -89,7 +95,7 @@ namespace Chat.Web.Controllers
                 await _context.SaveChangesAsync();
 
                 // Send image-message to group
-                var messageViewModel = _mapper.Map<Message, MessageViewModel>(message);
+                MessageViewModel messageViewModel = _mapper.Map<Message, MessageViewModel>(message);
                 await _hubContext.Clients.Group(room.Name).SendAsync("newMessage", messageViewModel);
 
                 return Ok();
@@ -100,14 +106,10 @@ namespace Chat.Web.Controllers
 
         private bool Validate(IFormFile file)
         {
-            if (file.Length > FileSizeLimit)
-                return false;
+            if (file.Length > _fileSizeLimit) return false;
 
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (string.IsNullOrEmpty(extension) || !AllowedExtensions.Any(s => s.Contains(extension)))
-                return false;
-
-            return true;
+            string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            return !string.IsNullOrEmpty(extension) && _allowedExtensions.Any(s => s.Contains(extension));
         }
     }
 }

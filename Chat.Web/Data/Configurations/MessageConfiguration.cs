@@ -1,10 +1,7 @@
-﻿using Chat.Web.Models;
+﻿
+using Chat.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Chat.Web.Data.Configurations
 {
@@ -14,11 +11,11 @@ namespace Chat.Web.Data.Configurations
         {
             builder.ToTable("Messages");
 
-            builder.Property(s => s.Content).IsRequired().HasMaxLength(500);
+            builder.Property(message => message.Content).IsRequired().HasMaxLength(500);
 
-            builder.HasOne(s => s.ToRoom)
-                .WithMany(m => m.Messages)
-                .HasForeignKey(s => s.ToRoomId)
+            builder.HasOne(message => message.ToRoom)
+                .WithMany(room => room.Messages)
+                .HasForeignKey(message => message.ToRoomId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

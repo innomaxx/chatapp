@@ -1,10 +1,7 @@
-﻿using Chat.Web.Models;
+﻿
+using Chat.Web.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Chat.Web.Data.Configurations
 {
@@ -14,10 +11,10 @@ namespace Chat.Web.Data.Configurations
         {
             builder.ToTable("Rooms");
 
-            builder.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            builder.Property(room => room.Name).IsRequired().HasMaxLength(100);
 
-            builder.HasOne(s => s.Admin)
-                .WithMany(u => u.Rooms)
+            builder.HasOne(room => room.Admin)
+                .WithMany(user => user.Rooms)
                 .IsRequired();
         }
     }

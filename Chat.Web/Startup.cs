@@ -1,20 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
-using Chat.Web.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using Chat.Web.Data;
 using Chat.Web.Hubs;
 using Chat.Web.Models;
-using AutoMapper;
 
 namespace Chat.Web
 {
@@ -35,12 +29,14 @@ namespace Chat.Web
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
-            services.AddDefaultIdentity<ApplicationUser>(options =>
-            {
-                options.SignIn.RequireConfirmedAccount = false;
-                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
-                options.User.RequireUniqueEmail = true;
-            }).AddEntityFrameworkStores<ApplicationDbContext>();
+            services
+                .AddDefaultIdentity<ApplicationUser>(options => 
+                {
+                    options.SignIn.RequireConfirmedAccount = false;
+                    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+                    options.User.RequireUniqueEmail = true;
+                })
+                .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddAutoMapper(typeof(Startup));
             services.AddRazorPages();
@@ -63,7 +59,7 @@ namespace Chat.Web
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

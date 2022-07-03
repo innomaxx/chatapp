@@ -1,16 +1,17 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Chat.Web.Data;
-using Chat.Web.Models;
-using Microsoft.AspNetCore.Authorization;
+
 using AutoMapper;
-using Chat.Web.Hubs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+
+using Chat.Web.Data;
+using Chat.Web.Hubs;
+using Chat.Web.Models;
 using Chat.Web.ViewModels;
 
 namespace Chat.Web.Controllers
@@ -36,21 +37,21 @@ namespace Chat.Web.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<RoomViewModel>>> Get()
         {
-            var rooms = await _context.Rooms.ToListAsync();
+            List<Room> rooms = await _context.Rooms.ToListAsync();
 
-            var roomsViewModel = _mapper.Map<IEnumerable<Room>, IEnumerable<RoomViewModel>>(rooms);
+            IEnumerable<RoomViewModel> roomsViewModel =
+                _mapper.Map<IEnumerable<Room>, IEnumerable<RoomViewModel>>(rooms);
 
             return Ok(roomsViewModel);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<Room>> Get(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
-            if (room == null)
-                return NotFound();
+            Room room = await _context.Rooms.FindAsync(id);
+            if (room == null) return NotFound();
 
-            var roomViewModel = _mapper.Map<Room, RoomViewModel>(room);
+            RoomViewModel roomViewModel = _mapper.Map<Room, RoomViewModel>(room);
             return Ok(roomViewModel);
         }
 
@@ -60,8 +61,9 @@ namespace Chat.Web.Controllers
             if (_context.Rooms.Any(r => r.Name == roomViewModel.Name))
                 return BadRequest("Invalid room name or room already exists");
 
-            var user = _context.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
-            var room = new Room()
+            ApplicationUser user = _context.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
+            
+            var room = new Room
             {
                 Name = roomViewModel.Name,
                 Admin = user
@@ -81,13 +83,12 @@ namespace Chat.Web.Controllers
             if (_context.Rooms.Any(r => r.Name == roomViewModel.Name))
                 return BadRequest("Invalid room name or room already exists");
 
-            var room = await _context.Rooms
+            Room room = await _context.Rooms
                 .Include(r => r.Admin)
-                .Where(r => r.Id == id && r.Admin.UserName == User.Identity.Name)
+                .Where(room => room.Id == id && room.Admin.UserName == User.Identity.Name)
                 .FirstOrDefaultAsync();
 
-            if (room == null)
-                return NotFound();
+            if (room == null) return NotFound();
 
             room.Name = roomViewModel.Name;
             await _context.SaveChangesAsync();
@@ -97,16 +98,15 @@ namespace Chat.Web.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var room = await _context.Rooms
-                .Include(r => r.Admin)
-                .Where(r => r.Id == id && r.Admin.UserName == User.Identity.Name)
+            Room room = await _context.Rooms
+                .Include(room => room.Admin)
+                .Where(room => room.Id == id && room.Admin.UserName == User.Identity.Name)
                 .FirstOrDefaultAsync();
 
-            if (room == null)
-                return NotFound();
+            if (room == null) return NotFound();
 
             _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
