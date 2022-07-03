@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prometheus;
 
 using Chat.Web.Data;
 using Chat.Web.Helpers;
@@ -66,6 +67,7 @@ namespace Chat.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseHttpMetrics();
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -75,6 +77,7 @@ namespace Chat.Web
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapMetrics();
             });
         }
     }
