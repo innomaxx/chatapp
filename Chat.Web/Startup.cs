@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Chat.Web.Data;
+using Chat.Web.Helpers;
 using Chat.Web.Hubs;
 using Chat.Web.Models;
 
@@ -25,7 +26,7 @@ namespace Chat.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(ConnStringUtils.FormConnectionString(Configuration)));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -45,8 +46,10 @@ namespace Chat.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext)
         {
+            dbContext.Database.Migrate();
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
